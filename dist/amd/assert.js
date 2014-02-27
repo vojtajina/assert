@@ -6,6 +6,7 @@ define([], function() {
     var position = (i / 2) + 1;
     return POSITION_NAME[position] || (position + 'th');
   }
+  var primitives = $traceurRuntime.type;
   function assertArgumentTypes() {
     for (var params = [],
         $__2 = 0; $__2 < arguments.length; $__2++) params[$__2] = arguments[$__2];
@@ -18,9 +19,6 @@ define([], function() {
         l = params.length; i < l; i = i + 2) {
       actual = params[i];
       type = params[i + 1];
-      if (typeof type === 'undefined') {
-        continue;
-      }
       currentArgErrors = [];
       if (!isType(actual, type, currentArgErrors)) {
         errors.push(argPositionName(i) + ' argument has to be an instance of ' + prettyPrint(type) + ', got ' + prettyPrint(actual));
@@ -58,6 +56,21 @@ define([], function() {
     return value.__assertName || value.name || value.toString();
   }
   function isType(value, T, errors) {
+    if (T === primitives.void) {
+      return typeof value === 'undefined';
+    }
+    if (T === primitives.any || value === null) {
+      return true;
+    }
+    if (T === primitives.string) {
+      return typeof value === 'string';
+    }
+    if (T === primitives.number) {
+      return typeof value === 'number';
+    }
+    if (T === primitives.boolean) {
+      return typeof value === 'boolean';
+    }
     if (typeof T.assert === 'function') {
       var parentStack = currentStack;
       var isValid;
