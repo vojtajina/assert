@@ -33,6 +33,11 @@ describe('basic type check', function() {
     expect(() => assert.type(123, Type))
       .toThrowError('Expected an instance of Type, got 123!');
   });
+
+
+  it('should allow null', function() {
+    assert.type(null, Type);
+  });
 });
 
 
@@ -86,8 +91,8 @@ describe('custom check', function() {
     };
 
     expect(function() {
-      assert.type(null, Type);
-    }).toThrowError('Expected an instance of Type, got null!\n' +
+      assert.type(12345, Type);
+    }).toThrowError('Expected an instance of Type, got 12345!\n' +
                     '  - not long enough');
   });
 });
@@ -100,17 +105,22 @@ describe('custom check', function() {
 //
 // Again, you probably won't write this code and rather use Traceur to do it for you, simply based on type annotations.
 describe('primitive value check', function() {
+  var primitive = $traceurRuntime.type;
 
   describe('string', function() {
 
     it('should pass', function() {
-      assert.type('xxx', assert.string);
+      assert.type('xxx', primitive.string);
     });
 
 
     it('should fail', function() {
-      expect(() => assert.type(null, assert.string))
-        .toThrowError('Expected an instance of string, got null!');
+      expect(() => assert.type(12345, primitive.string))
+        .toThrowError('Expected an instance of string, got 12345!');
+    });
+
+    it('should allow null', function() {
+      assert.type(null, primitive.string);
     });
   });
 
@@ -118,13 +128,17 @@ describe('primitive value check', function() {
   describe('number', function() {
 
     it('should pass', function() {
-      assert.type(123, assert.number);
+      assert.type(123, primitive.number);
     });
 
 
     it('should fail', function() {
-      expect(() => assert.type(false, assert.number))
+      expect(() => assert.type(false, primitive.number))
         .toThrowError('Expected an instance of number, got false!');
+    });
+
+    it('should allow null', function() {
+      assert.type(null, primitive.number);
     });
   });
 
@@ -132,14 +146,18 @@ describe('primitive value check', function() {
   describe('boolean', function() {
 
     it('should pass', function() {
-      assert.type(true, assert.boolean);
-      assert.type(false, assert.boolean);
+      assert.type(true, primitive.boolean);
+      assert.type(false, primitive.boolean);
     });
 
 
     it('should fail', function() {
-      expect(() => assert.type(123, assert.boolean))
+      expect(() => assert.type(123, primitive.boolean))
         .toThrowError('Expected an instance of boolean, got 123!');
+    });
+
+    it('should allow null', function() {
+      assert.type(null, primitive.boolean);
     });
   });
 });
@@ -204,10 +222,10 @@ describe('define', function() {
 
 
     it('should fail when non-array given', function () {
-      expect(() => assert.type(null, Titles))
-        .toThrowError('Expected an instance of ListOfTitles, got null!\n' +
-                      '  - null is not instance of array of string/number\n' +
-                      '    - null is not instance of Array');
+      expect(() => assert.type('foo', Titles))
+        .toThrowError('Expected an instance of ListOfTitles, got "foo"!\n' +
+                      '  - "foo" is not instance of array of string/number\n' +
+                      '    - "foo" is not instance of Array');
     });
 
 
@@ -239,10 +257,10 @@ describe('define', function() {
 
 
     it('should fail when non-object given', function () {
-      expect(() => assert.type(null, User))
-        .toThrowError('Expected an instance of MyUser, got null!\n' +
-                      '  - null is not instance of object with properties name, age\n' +
-                      '    - null is not instance of Object');
+      expect(() => assert.type(123, User))
+        .toThrowError('Expected an instance of MyUser, got 123!\n' +
+                      '  - 123 is not instance of object with properties name, age\n' +
+                      '    - 123 is not instance of Object');
     });
 
 
@@ -315,8 +333,39 @@ describe('Traceur', function() {
 
     it('should fail', function() {
       expect(() => {
-        var count: number = null;
-      }).toThrowError('Expected an instance of number, got null!');
+        var count: number = true;
+      }).toThrowError('Expected an instance of number, got true!');
+    });
+  });
+
+
+  describe('void', function() {
+    function foo(bar): void {
+      return bar;
+    }
+
+    it('should pass when not defined', function() {
+      function nonReturn(): void {}
+      function returnNothing(): void { return; }
+      function returnUndefined(): void { return undefined; }
+
+      foo();
+      foo(undefined);
+      nonReturn();
+      returnNothing();
+      returnUndefined();
+    });
+
+
+    it('should fail when a value returned', function() {
+      expect(() => foo('bar'))
+        .toThrowError('Expected to return an instance of voidType, got "bar"!');
+    });
+
+
+    it('should fail when null returned', function() {
+      expect(() => foo(null))
+        .toThrowError('Expected to return an instance of voidType, got null!');
     });
   });
 });
